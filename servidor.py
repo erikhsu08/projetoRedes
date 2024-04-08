@@ -1,87 +1,60 @@
-import socket 
-from _thread import * 
+import socket
+from _thread import *
 import sys
 
-servidor = "192.168.74.1"
+
+servidor = '192.168.74.1'
 porta = 5555
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #usando TCP
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-try: 
+servidor_ip = socket.gethostbyname(servidor)
+
+try:
     s.bind((servidor, porta))
+
 except socket.error as e:
-    str(e)
+    print(str(e))
 
-s.listen(2) #indica o número de conexões
-print("Servidor iniciado: Esperando por uma conexão")
+s.listen(2)
+print("[INFO]: Servidor iniciado, esperando por conexão")
 
-conexoes = []
+ID_atual = "0"
+pos = ["0:50,50", "1:100,100"]
 
-def cria_pos(posX, posY):
-    return str(posX) + "," + str(posY)
-
-def pega_pos(posX, posY):
-    return f"{posX}, {posY}"
-
-def enviar_para_todos(dados, cliente_emissor):
-    for conexao in conexoes:
-        if conexao != cliente_emissor:
-            conexao.sendall(dados)
-
-def envia_p_cliente(conexao, dados):
-    try: 
-        conexao.sendall(dados)
-        return True
-    except socket.error as e:
-        print("[ERRO]: Falha ao enviar dados para o cliente", str(e))
-        return False
-    
-def threaded_client (conexao, jogador):
-    global p1_x_pos, p1_y_pos, p2_x_pos, p2_y_pos
-    conexao.send(str.encode("Conectado"))
- 
+def threaded_client(conexao):
+    global ID_atual, pos
+    conexao.send(str.encode(ID_atual))
+    ID_atual = "1"
+    resposta = ''
     while True:
-        try: 
+        try:
             dados = conexao.recv(2048)
-            posicao = dados.decode("utf-8").strip()
+            resposta = dados.decode('utf-8')
             if not dados:
-                print("[INFO]:", endereco, "desconectado")
+                conexao.send(str.encode("[INFO]: ", endereco, "desconectado."))
                 break
             else:
-                print("Posição do jogador ", jogador, ":", posicao)
+                print("Recebido: " + resposta)
+                vetor = resposta.split(":")
+                id = int(vetor[0])
+                pos[id] = resposta
 
-            #Separar a posição por vírgula e remover espaços em branco
-            posicoes = posicao.split(",")
-            posicoes = [p.strip() for p in posicoes]
+                if id == 0: nid = 1
+                if id == 1: nid = 0
 
-            if jogador == 1:
-                p1_x_pos = int(posicoes[0])
-                p1_y_pos = int(round(float(posicoes[1])))
-            elif jogador == 2:
-                p2_x_pos = int(posicoes[0])
-                p2_y_pos = int(round(float(posicoes[1])))
+                resposta = pos[nid][:]
+                print("Enviando: " + resposta)
 
-                
-            envia_p_cliente(conexao, b"Recebido")
-            enviar_para_todos(dados,conexao)
-        except socket.error as e:
-            print("[ERRO]: ", str(e))
-            break
-        except ValueError as ve:
-            print("[ERRO]: Valor inválido para conversão: ", ve)
+            conexao.sendall(str.encode(resposta))
+        except:
             break
 
     print("Conexão perdida com o jogador")
     conexao.close()
 
-jogadorAtual = 1
-
 while True:
     conexao, endereco = s.accept()
-    print("[INFO]:", endereco, "conectado")
+    print("[INFO]: ", endereco, "conectado.")
 
-    #adicionar conexao à lista de conexoes
-    conexoes.append(conexao)
-
-    start_new_thread(threaded_client, (conexao, jogadorAtual))
-    jogadorAtual += 1
+    start_new_thread(threaded_client, (conexao,))
