@@ -1,193 +1,199 @@
 import pygame
 import socket
-
-
-#Constantes e variáveis
-BRANCO = (255, 255, 255)
-PRETO = (0, 0, 0)
-AZUL = (0, 0, 255)
-VERMELHO = (255, 0, 0)
-
-LARGURA = 600
-ALTURA = 600
-
-pygame.init()
-fonte_jogo = pygame.font.SysFont('Arial', 40)
-
-delay = 30
-
-velocidade_raquete = 20
-largura_raquete = 10
-altura_raquete = 100
-
-#Posição incial de P1
-p1_x_pos = 10
-p1_y_pos = ALTURA / 2 - altura_raquete / 2
-
-#Posição incial de P2
-p2_x_pos = LARGURA - largura_raquete - 10
-p2_y_pos = ALTURA / 2 - altura_raquete / 2
-
-p1_pontos = 0
-p2_pontos = 0
-
-p1_up = False
-p1_down = False
-p2_up = False
-p2_down = False
-
-bola_x_pos = LARGURA / 2
-bola_y_pos = ALTURA / 2
-largura_bola =  8
-bola_x_velocidade  = -10
-bola_y_velocidade = 0
-
-tela = pygame.display.set_mode((LARGURA, ALTURA))
+import threading
 
 class Network:
+
     def __init__(self):
         self.cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.servidor = "192.168.74.1"
+        self.host = "192.168.74.1" 
         self.porta = 5555
-        self.endereco = (self.servidor, self.porta)
-        self.pos = self.conectado()
+        self.endereco = (self.host, self.porta)
+        self.id = self.connect()
 
-    def getPos(self):
-        return self.pos
-    
-    def conectado(self):
-        try:
-            self.cliente.connect(self.endereco)
-            return self.cliente.recv(2048).decode()
-        except:
-            pass
-    
+
+    def connect(self):
+        self.cliente.connect(self.endereco)
+        return self.cliente.recv(2048).decode()
+
     def send(self, dados):
         try:
             self.cliente.send(str.encode(dados))
-            return self.cliente.recv(2048).decode()
+            reposta = self.cliente.recv(2048).decode()
+            return reposta
         except socket.error as e:
-            print(e)
-
-def desenha_objetos():
-    pygame.draw.rect(tela, VERMELHO, (int(p1_x_pos), int(p1_y_pos), largura_raquete, altura_raquete))
-    pygame.draw.rect(tela, AZUL, (int(p2_x_pos), int(p2_y_pos), largura_raquete, altura_raquete))
-    pygame.draw.circle(tela, BRANCO,  (bola_x_pos, bola_y_pos), largura_bola)
-    pontos = fonte_jogo.render(f"{str(p1_pontos)} - {str(p2_pontos)}", False, BRANCO)
-    tela.blit(pontos, (260, 50))
+            return str(e)
 
 
-def mov_player(jogador):
-    global p1_y_pos
-    global p2_y_pos
+class Jogador():
+    largura = altura = 50
 
-    if jogador == 1:
-        if p1_up and p1_y_pos > 0:
-            p1_y_pos = max(p1_y_pos - velocidade_raquete, 0)
-        elif p1_down and p1_y_pos < ALTURA - altura_raquete:
-            p1_y_pos = min(p1_y_pos + velocidade_raquete, ALTURA - altura_raquete)
-    elif jogador == 2:
-        if p2_up and p2_y_pos > 0:
-            p2_y_pos = max(p2_y_pos - velocidade_raquete, 0)
-        elif p2_down and p2_y_pos < ALTURA - altura_raquete:
-            p2_y_pos = min(p2_y_pos + velocidade_raquete, ALTURA - altura_raquete)    
+    def __init__(self, InicioX, InicioY, cor):
+        self.x = InicioX
+        self.y = InicioY
+        self.velocidade = 2
+        self.cor = cor
 
-def mov_bola(): 
-    global bola_x_pos
-    global bola_y_pos
-    global bola_x_velocidade 
-    global bola_y_velocidade
-    global p1_pontos
-    global p2_pontos
+    def draw(self, g):
+        pygame.draw.circle(g, self.cor ,(self.x, self.y), self.largura // 5)
 
-    if (bola_x_pos + bola_x_velocidade  < p1_x_pos + largura_raquete) and (p1_y_pos < bola_y_pos + bola_y_velocidade + largura_bola < p1_y_pos + altura_raquete):
-        bola_x_velocidade  = -bola_x_velocidade 
-        bola_y_velocidade = (p1_y_pos + altura_raquete / 2 - bola_y_pos) / 15
-        bola_y_velocidade = -bola_y_velocidade
+    def move(self, dirn):
+        if dirn == 0:
+            self.x += self.velocidade
+        elif dirn == 1:
+            self.x -= self.velocidade
+        elif dirn == 2:
+            self.y -= self.velocidade
+        else:
+            self.y += self.velocidade
+
+
+class Jogo:
+    def __init__(self, w, h):
+        self.net = Network()
+        self.largura = w
+        self.altura = h
+        self.Jogador = Jogador(15, 125, (0,0,255))
+        self.Jogador2 = Jogador(50,125, (255, 0, 0))
+        self.canvas = Canvas(self.largura, self.altura, "Jogo de Corrida")
+        self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
+        self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
+
+        self.obstaculos = [
+            pygame.Rect(200, 100, 100, 50),
+            pygame.Rect(400, 200, 50, 150),
+            pygame.Rect(600, 50, 80, 200)
+            ]
+
+
+    def run(self):
+        clock = pygame.time.Clock()
+        run = True
+        while run:
+            clock.tick(60)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+
+                if event.type == pygame.K_ESCAPE:
+                    run = False
+
+            tecla = pygame.key.get_pressed()
+
+            if tecla[pygame.K_RIGHT]:
+                if self.Jogador.x <= self.largura - self.Jogador.velocidade:
+                    self.Jogador.move(0)
+
+            if tecla[pygame.K_LEFT]:
+                if self.Jogador.x >= self.Jogador.velocidade:
+                    self.Jogador.move(1)
+
+            if tecla[pygame.K_UP]:
+                if self.Jogador.y >= self.Jogador.velocidade:
+                    self.Jogador.move(2)
+
+            if tecla[pygame.K_DOWN]:
+                if self.Jogador.y <= self.altura - self.Jogador.velocidade:
+                    self.Jogador.move(3)
+
+            for obstaculo in self.obstaculos:
+                margem = 10
+                retangulo_colisao = obstaculo.inflate(-margem, -margem)
+                pygame.draw.rect(self.canvas.get_canvas(), (255, 0, 0), obstaculo)
+                
+                if retangulo_colisao.colliderect(pygame.Rect(self.Jogador.x, self.Jogador.y, self.Jogador.largura, self.Jogador.altura)):
+                    self.Jogador.x = 15  # Mova o jogador de volta à posição inicial
+                    self.Jogador.y = 125
+
+
+            #Enviar dados
+            self.Jogador2.x, self.Jogador2.y = self.parse_dados(self.send_dados())
+
+            #Atualizar Canvas
+            self.canvas.draw_background()
+            self.canvas.draw_linha_pontilhada((0, self.altura // 2), (self.largura, self.altura // 2), (0, 0, 0))
+            self.draw_linha_chegada()
+            self.draw_linha_inicio()
+            self.Jogador.draw(self.canvas.get_canvas())
+            self.Jogador2.draw(self.canvas.get_canvas())
+            self.draw()
+            self.canvas.update()
+            
     
-    elif bola_x_pos + bola_x_velocidade < 0:
-        p2_pontos += 1
-        bola_x_pos = LARGURA / 2
-        bola_y_pos = ALTURA / 2
-        bola_x_velocidade = 10
-        bola_y_velocidade = 0
-    
-    if (bola_x_pos + bola_x_velocidade > p2_x_pos - largura_raquete) and (p2_y_pos < bola_y_pos + bola_y_velocidade + largura_bola < p2_y_pos + altura_raquete):
-        bola_x_velocidade = -bola_x_velocidade
-        bola_y_velocidade = (p2_y_pos + altura_raquete / 2 - bola_y_pos) / 15
-        bola_y_velocidade = -bola_y_velocidade
-
-    elif bola_x_pos + bola_x_velocidade > ALTURA:
-        p1_pontos += 1
-        bola_x_pos = LARGURA / 2
-        bola_y_pos = ALTURA / 2
-        bola_x_velocidade = -10
-        bola_y_velocidade = 0
-
-    if (bola_y_pos + bola_y_velocidade > ALTURA or bola_y_pos + bola_y_velocidade < 0):
-        bola_y_velocidade = -bola_y_velocidade
-
-    bola_x_pos += bola_x_velocidade
-    bola_y_pos += bola_y_velocidade
-
-
-def pega_pos(posX, posY):
-    return f"{posX}, {posY}"
-
-pygame.display.set_caption("Jogo Ping Pong")
-tela.fill(PRETO)
-pygame.display.flip()
-
-running = True
-n = Network()
-
-last_sent_p1_pos = None
-last_sent_p2_pos = None
-
-while running: 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                running = False
-            if event.key == pygame.K_w:
-                p1_up = True
-            if event.key == pygame.K_s:
-                p1_down = True
-            if event.key == pygame.K_UP:
-                p2_up = True
-            if event.key == pygame.K_DOWN:
-                p2_down = True
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_w:
-                p1_up = False
-            if event.key == pygame.K_s:
-                p1_down = False
-            if event.key == pygame.K_UP:
-                p2_up = False
-            if event.key == pygame.K_DOWN:
-                p2_down = False
+        pygame.quit()
 
     
-    tela.fill(PRETO)
-    mov_player(1)
-    mov_player(2)
-    mov_bola()
+    def send_dados(self):
+        dados = str(self.net.id) + ":" + str(self.Jogador.x) + "," + str(self.Jogador.y)
+        reposta = self.net.send(dados)
+        return reposta
 
-    #Obter as pos dos jogadores
-    new_p1_pos = pega_pos(p1_x_pos, p1_y_pos)
-    if new_p1_pos != last_sent_p1_pos:
-        n.send(new_p1_pos)
-        last_sent_p1_pos = new_p1_pos
-    
-    new_p2_pos = pega_pos(p2_x_pos, p2_y_pos)
-    if new_p2_pos != last_sent_p2_pos:
-        n.send(new_p2_pos)
-        last_sent_p2_pos = new_p2_pos
- 
+    @staticmethod
+    def parse_dados(dados):
+        try:
+            d = dados.split(":")[1].split(",")
+            return int(d[0]), int(d[1])
+        except:
+            return 0,0
+        
+    def draw_linha_chegada(self):
+        pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
+
+    def draw_linha_inicio(self):
+        iniciox, inicioy, largura, altura = 30, 0, 1, self.altura
+
+        for x in range(iniciox, iniciox + largura, 10):
+            pygame.draw.line(self.canvas.get_canvas(), (0,0,0), (x, inicioy), (x, inicioy + altura), 1)
+
+    def draw(self):
+        for obstaculo in self.obstaculos:
+            pygame.draw.rect(self.canvas.get_canvas(), (0, 0, 0), obstaculo)
+
+class Canvas:
+
+    def __init__(self, l, a, nome="None"):
+        self.largura = l
+        self.altura = a
+        self.tela = pygame.display.set_mode((l,a))
+        pygame.display.set_caption(nome)
+
+    @staticmethod
+    def update():
+        pygame.display.update()
+
+    def draw_texto(self, texto, tam, x, y):
+        pygame.font.init()
+        font = pygame.font.SysFont("comicsans", tam)
+        render = font.render(texto, 1, (0,0,0))
+
+        self.tela.draw(render, (x,y))
+
+    def get_canvas(self):
+        return self.tela
+
+    def draw_background(self):
+        self.tela.fill((255,255,255))
+
+    def draw_linha_pontilhada(self, pos_comeco, pos_fim, cor, largura = 1, tam_pontilhado = 10):
+        x1,y1 = pos_comeco
+        x2,y2 = pos_fim
+        dx = x2 - x1
+        dy = y2 - y1
+        distancia = max(abs(dx), abs(dy))
+        dx_unidade = dx / distancia
+        dy_unidade = dy / distancia
+        for i in range(int(distancia / tam_pontilhado)):
+            inicio = round(i * tam_pontilhado)
+            fim = round((i + 0.5) * tam_pontilhado)
+            iniciox = x1 + inicio * dx_unidade
+            inicioy = y1 + inicio * dy_unidade
+            fimx = x1 + fim * dx_unidade
+            fimy = y1 + fim * dy_unidade
+            pygame.draw.line(self.tela, cor, (iniciox, inicioy), (fimx, fimy), largura)
 
 
-    desenha_objetos()
-    pygame.display.flip()
-    pygame.time.wait(delay)
+#Iniciar jogo
+if __name__ == "__main__":
+    jogo = Jogo(800,500)
+    jogo.run()
