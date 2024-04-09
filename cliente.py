@@ -54,8 +54,8 @@ class Jogo:
         self.net = Network()
         self.largura = w
         self.altura = h
-        self.Jogador = Jogador(15, 125, (0,0,255))
-        self.Jogador2 = Jogador(15,300, (255, 0, 0))
+        self.Jogador = Jogador(10, 225, (0,0,255))
+        self.Jogador2 = Jogador(15,255, (255, 0, 0))
         self.canvas = Canvas(self.largura, self.altura, "Jogo de Corrida")
         self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
         self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
