@@ -2,8 +2,9 @@ import pygame
 import socket
 import threading
 
-class Network:
 
+#Trechos relacionado às configurações de rede
+class Network:
     def __init__(self):
         self.cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = "192.168.15.30" 
@@ -24,7 +25,7 @@ class Network:
         except socket.error as e:
             return str(e)
 
-
+#Classe dos jogadores
 class Jogador():
     largura = altura = 50
 
@@ -35,7 +36,7 @@ class Jogador():
         self.cor = cor
 
     def draw(self, g):
-        pygame.draw.circle(g, self.cor ,(self.x, self.y), self.largura // 5)
+        pygame.draw.rect(g, self.cor, (self.x, self.y, self.largura, self.altura), 0)
 
     def move(self, dirn):
         if dirn == 0:
@@ -47,14 +48,14 @@ class Jogador():
         else:
             self.y += self.velocidade
 
-
+#Classe jogo
 class Jogo:
     def __init__(self, w, h):
         self.net = Network()
         self.largura = w
         self.altura = h
         self.Jogador = Jogador(15, 125, (0,0,255))
-        self.Jogador2 = Jogador(50,125, (255, 0, 0))
+        self.Jogador2 = Jogador(15,300, (255, 0, 0))
         self.canvas = Canvas(self.largura, self.altura, "Jogo de Corrida")
         self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
         self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
@@ -150,8 +151,8 @@ class Jogo:
         for obstaculo in self.obstaculos:
             pygame.draw.rect(self.canvas.get_canvas(), (0, 0, 0), obstaculo)
 
+#Classe canvas
 class Canvas:
-
     def __init__(self, l, a, nome="None"):
         self.largura = l
         self.altura = a
