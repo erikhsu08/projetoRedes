@@ -59,7 +59,7 @@ class Jogo:
         self.canvas = Canvas(self.largura, self.altura, "Corrida no Labirinto")
         self.linha_chegada_atingida = False
         self.jogador_vencedor = None
-        self.vitoria = False
+        self.jogador_id = self.net.id
         
 
         self.obstaculos = [
@@ -181,7 +181,7 @@ class Jogo:
 
             
             #Enviar dados
-            self.Jogador2.x, self.Jogador2.y, self.vitoria, vencedor = self.parse_dados(self.send_dados())
+            self.Jogador2.x, self.Jogador2.y = self.parse_dados(self.send_dados())
 
             #Atualizar Canvas
             self.canvas.draw_background()
@@ -189,8 +189,9 @@ class Jogo:
             self.Jogador2.draw(self.canvas.get_canvas())
             self.draw()
 
+            self.receber_dados()
 
-            if self.vitoria:
+            if self.linha_chegada_atingida:
                 self.mostrar_msg_vitoria(self.jogador_vencedor)
 
             self.canvas.update()
@@ -209,6 +210,10 @@ class Jogo:
         altura_texto = render.get_height()
         x_texto = (self.largura - largura_texto) // 2
         y_texto = (self.altura - altura_texto) // 2
+
+        for jogador in (self.Jogador, self.Jogador2):
+            dados = "vitoria:" + mensagem + ":" + str(self.jogador_id)
+            self.net.send(dados)
         
         self.canvas.get_canvas().blit(render, (x_texto, y_texto))
 
@@ -219,8 +224,18 @@ class Jogo:
             return "2"
         else:
             return ""
-        
+    
+    def receber_dados(self):
+        dados = self.net.recv(2048).decode()
+        if dados.startwith("vitoria"):
+            mensagem, jogador_id_vencedor = dados.split(":")[1:]
 
+            self.mostrar_msg_vitoria_recebida(mensagem, jogador_id_vencedor)
+
+    def mostrar_msg_vitoria_recebida(self, mensagem, jogador_id_vencedor):
+        if self.jogador_id != jogador_id_vencedor:
+            self.mostrar_msg_vitoria(jogador_id_vencedor)
+    
     def send_dados(self):
         dados = str(self.net.id) + ":" + str(self.Jogador.x) + "," + str(self.Jogador.y)
         reposta = self.net.send(dados)
@@ -229,18 +244,10 @@ class Jogo:
     @staticmethod
     def parse_dados(dados):
         try:
-            partes = dados.split(":")
-            vitoria = False
-            vencedor = 0
-            if len(partes) > 1:
-                if partes[1].startswith("W"):
-                    vencedor = int(partes[1][1:])
-                    vitoria = True
-            d = partes[1].split(",") if len(partes) > 1 else ["0", "0"]
-            return int(d[0]), int(d[1]), vitoria, vencedor
+            d = dados.split(":")[1].split(",")
+            return int(d[0]), int(d[1])
         except:
-            return 0, 0, False, 0
-
+            return 0,0
         
     def draw_linha_chegada(self):
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
