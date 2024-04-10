@@ -57,8 +57,9 @@ class Jogo:
         self.Jogador = Jogador(15, 100, (0,0,255))  #Posições iniciais e cores dos jogadores
         self.Jogador2 = Jogador(22,100, (255, 0, 0)) #Posições iniciais e cores dos jogadores
         self.canvas = Canvas(self.largura, self.altura, "Corrida no Labirinto")
-        self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
-        self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
+        self.linha_chegada_atingida = False
+        self.jogador_vencedor = None
+        
 
         self.obstaculos = [
             #(X, Y, LARGURA, ALTURA)
@@ -160,6 +161,13 @@ class Jogo:
                 if self.Jogador.y <= self.altura - self.Jogador.velocidade:
                     self.Jogador.move(3)
 
+            #Colisao com a linha de chegada
+            if self.Jogador.x + self.Jogador.largura >= 778 and self.Jogador.y + self.Jogador.altura >= 580:
+                if not self.linha_chegada_atingida:
+                    self.linha_chegada_atingida = True
+                    self.jogador_vencedor = self.Jogador
+            
+            #Colisao com o labirinto
             for obstaculo in self.obstaculos:
                 margem = 10
                 retangulo_colisao = obstaculo.inflate(-margem, -margem)
@@ -170,22 +178,48 @@ class Jogo:
                     self.Jogador.x = 20 
                     self.Jogador.y = 100
 
-
+            
             #Enviar dados
             self.Jogador2.x, self.Jogador2.y = self.parse_dados(self.send_dados())
 
             #Atualizar Canvas
             self.canvas.draw_background()
-            #self.draw_linha_chegada()
             self.Jogador.draw(self.canvas.get_canvas())
             self.Jogador2.draw(self.canvas.get_canvas())
             self.draw()
+
+
+            if self.linha_chegada_atingida:
+                self.mostrar_msg_vitoria(self.jogador_vencedor)
+
             self.canvas.update()
-            
-    
+
         pygame.quit()
 
-    
+
+    def mostrar_msg_vitoria(self, jogador):
+        pygame.font.init()
+        font = pygame.font.SysFont("comicsans", 50)
+        mensagem = f"Jogador {self.obter_cor_jogador(jogador)} Venceu!"
+        render = font.render(mensagem, True, (0, 255, 0))
+
+        # Posicionar mensagem no centro da tela
+        largura_texto = render.get_width()
+        altura_texto = render.get_height()
+        x_texto = (self.largura - largura_texto) // 2
+        y_texto = (self.altura - altura_texto) // 2
+        
+        self.canvas.get_canvas().blit(render, (x_texto, y_texto))
+
+    def obter_cor_jogador(self, jogador):
+        if jogador == self.Jogador:
+            return "1"
+        elif jogador == self.Jogador2:
+            return "2"
+        else:
+            return ""
+        
+
     def send_dados(self):
         dados = str(self.net.id) + ":" + str(self.Jogador.x) + "," + str(self.Jogador.y)
         reposta = self.net.send(dados)
@@ -203,8 +237,9 @@ class Jogo:
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
 
     def draw(self):
-        #Chegada
+        #Linha de Chegada
         pygame.draw.rect(self.canvas.get_canvas(), (0,255,0), (778, 580, 40, 50))
+
         for obstaculo in self.obstaculos:
             pygame.draw.rect(self.canvas.get_canvas(), (0, 0, 0), obstaculo)
 
