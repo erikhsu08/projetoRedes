@@ -54,18 +54,59 @@ class Jogo:
         self.net = Network()
         self.largura = w
         self.altura = h
-        self.Jogador = Jogador(10, 225, (0,0,255))
-        self.Jogador2 = Jogador(15,255, (255, 0, 0))
+        self.Jogador = Jogador(15, 100, (0,0,255))  #Posições iniciais e cores dos jogadores
+        self.Jogador2 = Jogador(15,255, (255, 0, 0)) #Posições iniciais e cores dos jogadores
         self.canvas = Canvas(self.largura, self.altura, "Jogo de Corrida")
         self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
         self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
 
         self.obstaculos = [
-            pygame.Rect(200, 100, 100, 50),
-            pygame.Rect(400, 200, 50, 150),
-            pygame.Rect(600, 50, 80, 200)
+            #(X, Y, LARGURA, ALTURA)
+            #Bordas da tela
+            pygame.Rect(0, 0, 800, 20), # borda de cima
+            pygame.Rect(0, 780, 800, 20), # borda de baixo
+            pygame.Rect(0, 0, 15, 780), # borda da esquerda
+            pygame.Rect(780, 0, 20, 580), #borda da direita 1
+            pygame.Rect(780, 630, 20, 400),#borda da direita 2
+            
+            #Labirinto
+            pygame.Rect(67, 80, 150, 20),
+            pygame.Rect(180, 80, 20, 100),
+            pygame.Rect(145, 180, 55, 20),
+            pygame.Rect(67, 150, 20, 350),
+            pygame.Rect(0, 380, 87, 20),
+            pygame.Rect(67, 480, 98, 20),
+            pygame.Rect(145, 180, 20, 150),
+            pygame.Rect(145, 380, 20, 100),
+            pygame.Rect(145, 310, 80, 20),
+            pygame.Rect(220, 250, 20, 170),
+            pygame.Rect(0, 600, 87, 20),
+            pygame.Rect(67, 560, 20, 60),
+            pygame.Rect(67, 560, 320, 20),
+            pygame.Rect(300, 250, 20, 330),
+            pygame.Rect(220, 480, 100, 20),
+            pygame.Rect(300, 250, 120, 20),
+            pygame.Rect(300, 180, 70, 20),
+            pygame.Rect(350, 80, 20, 100),
+            pygame.Rect(350, 80, 70, 20),
+            pygame.Rect(620, 0, 20, 100),
+            pygame.Rect(550 , 80, 70, 20),
+            pygame.Rect(350, 140, 120, 20),
+            pygame.Rect(470, 140, 20, 60),
+            pygame.Rect(420, 200, 70, 20),
+            pygame.Rect(420, 200, 20, 70),
+            pygame.Rect(550, 170, 20, 160),
+            pygame.Rect(300, 310, 250, 20),
+            pygame.Rect(700, 100, 20, 400),
+            pygame.Rect(700, 400, 80, 20),
+            pygame.Rect(620, 170, 20, 290),
+            pygame.Rect(550, 380, 80, 20),
+            pygame.Rect(550, 380, 20, 50),
+            pygame.Rect(620, 440, 80, 20),
+            pygame.Rect(520, 430, 50, 20),
+            pygame.Rect(380, 310, 20, 100),
+            pygame.Rect(460, 310, 20, 100),
             ]
-
 
     def run(self):
         clock = pygame.time.Clock()
@@ -104,8 +145,9 @@ class Jogo:
                 pygame.draw.rect(self.canvas.get_canvas(), (255, 0, 0), obstaculo)
                 
                 if retangulo_colisao.colliderect(pygame.Rect(self.Jogador.x, self.Jogador.y, self.Jogador.largura, self.Jogador.altura)):
-                    self.Jogador.x = 15  # Mova o jogador de volta à posição inicial
-                    self.Jogador.y = 125
+                    #Mova o jogador de volta à posição inicial
+                    self.Jogador.x = 20 
+                    self.Jogador.y = 100
 
 
             #Enviar dados
@@ -113,9 +155,7 @@ class Jogo:
 
             #Atualizar Canvas
             self.canvas.draw_background()
-            self.canvas.draw_linha_pontilhada((0, self.altura // 2), (self.largura, self.altura // 2), (0, 0, 0))
-            self.draw_linha_chegada()
-            self.draw_linha_inicio()
+            #self.draw_linha_chegada()
             self.Jogador.draw(self.canvas.get_canvas())
             self.Jogador2.draw(self.canvas.get_canvas())
             self.draw()
@@ -140,12 +180,6 @@ class Jogo:
         
     def draw_linha_chegada(self):
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
-
-    def draw_linha_inicio(self):
-        iniciox, inicioy, largura, altura = 30, 0, 1, self.altura
-
-        for x in range(iniciox, iniciox + largura, 10):
-            pygame.draw.line(self.canvas.get_canvas(), (0,0,0), (x, inicioy), (x, inicioy + altura), 1)
 
     def draw(self):
         for obstaculo in self.obstaculos:
@@ -176,25 +210,8 @@ class Canvas:
     def draw_background(self):
         self.tela.fill((255,255,255))
 
-    def draw_linha_pontilhada(self, pos_comeco, pos_fim, cor, largura = 1, tam_pontilhado = 10):
-        x1,y1 = pos_comeco
-        x2,y2 = pos_fim
-        dx = x2 - x1
-        dy = y2 - y1
-        distancia = max(abs(dx), abs(dy))
-        dx_unidade = dx / distancia
-        dy_unidade = dy / distancia
-        for i in range(int(distancia / tam_pontilhado)):
-            inicio = round(i * tam_pontilhado)
-            fim = round((i + 0.5) * tam_pontilhado)
-            iniciox = x1 + inicio * dx_unidade
-            inicioy = y1 + inicio * dy_unidade
-            fimx = x1 + fim * dx_unidade
-            fimy = y1 + fim * dy_unidade
-            pygame.draw.line(self.tela, cor, (iniciox, inicioy), (fimx, fimy), largura)
-
 
 #Iniciar jogo
 if __name__ == "__main__":
-    jogo = Jogo(800,500)
+    jogo = Jogo(800,800)
     jogo.run()
