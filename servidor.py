@@ -1,10 +1,11 @@
+import os
 import socket
 from _thread import *
 import sys
 
 
-servidor = '192.168.74.1'
-porta = 5555
+servidor = os.getenv("MY_IP")
+porta = os.getenv("MY_PORT")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
