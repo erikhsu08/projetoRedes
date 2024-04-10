@@ -166,7 +166,6 @@ class Jogo:
             if self.Jogador.x + self.Jogador.largura >= 778 and self.Jogador.y + self.Jogador.altura >= 580:
                 if not self.linha_chegada_atingida:
                     self.linha_chegada_atingida = True
-                    self.vitoria = True
                     self.jogador_vencedor = self.Jogador
             
             #Colisao com o labirinto
@@ -193,6 +192,7 @@ class Jogo:
 
             if self.vitoria:
                 self.mostrar_msg_vitoria(self.jogador_vencedor)
+
             self.canvas.update()
 
         pygame.quit()
@@ -201,7 +201,7 @@ class Jogo:
     def mostrar_msg_vitoria(self, jogador):
         pygame.font.init()
         font = pygame.font.SysFont("comicsans", 50)
-        mensagem = f"Jogador {self.obter_num_jogador(jogador)} Venceu!"
+        mensagem = f"Jogador {self.obter_cor_jogador(jogador)} Venceu!"
         render = font.render(mensagem, True, (0, 255, 0))
 
         # Posicionar mensagem no centro da tela
@@ -212,7 +212,7 @@ class Jogo:
         
         self.canvas.get_canvas().blit(render, (x_texto, y_texto))
 
-    def obter_num_jogador(self, jogador):
+    def obter_cor_jogador(self, jogador):
         if jogador == self.Jogador:
             return "1"
         elif jogador == self.Jogador2:
@@ -222,27 +222,17 @@ class Jogo:
         
 
     def send_dados(self):
-        dados = str(self.net.id) + ":"
-        if self.vitoria:
-            dados += "W" + self.obter_num_jogador(self.jogador_vencedor) + ","
-        dados += str(self.Jogador.x) + "," + str(self.Jogador.y)
+        dados = str(self.net.id) + ":" + str(self.Jogador.x) + "," + str(self.Jogador.y)
         reposta = self.net.send(dados)
         return reposta
 
     @staticmethod
     def parse_dados(dados):
         try:
-            partes = dados.split(":")
-            vitoria = False
-            if len(partes) > 1:
-                if partes[1].startswith("W"):
-                    vencedor = int(partes[1][1:])
-                    vitoria = True
-            d = partes[1].split(",") if len(partes) > 1 else ["0", "0"]
-            return vitoria, vencedor, int(d[0]), int(d[1])
+            d = dados.split(":")[1].split(",")
+            return int(d[0]), int(d[1])
         except:
-            return False, 0, 0, 0
-
+            return 0,0
         
     def draw_linha_chegada(self):
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
