@@ -1,14 +1,17 @@
+from dotenv import load_dotenv, dotenv_values
+import os
 import pygame
 import socket
 import threading
 
+load_dotenv()
 
 #Trechos relacionado às configurações de rede
 class Network:
     def __init__(self):
         self.cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "192.168.15.30" 
-        self.porta = 5555
+        self.host = os.getenv("MY_IP")
+        self.porta = os.getenv("MY_PORT")
         self.endereco = (self.host, self.porta)
         self.id = self.connect()
 
