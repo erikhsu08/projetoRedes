@@ -15,16 +15,22 @@ class Network:
 
     def connect(self):
         self.cliente.connect(self.endereco)
-        self.conexao = self.cliente
         return self.cliente.recv(2048).decode()
 
     def send(self, dados):
         try:
-            self.conexao.send(str.encode(dados))
-            reposta = self.conexao.recv(2048).decode()
+            self.cliente.send(str.encode(dados))
+            reposta = self.cliente.recv(2048).decode()
             return reposta
         except socket.error as e:
             return str(e)
+        
+    def send_victory(self, winner):
+        try:
+            self.cliente.send(str.encode("WINNER: " + winner))
+        except socket.error as e:
+            return str(e)
+        
 
 #Classe dos jogadores
 class Jogador():
@@ -60,7 +66,6 @@ class Jogo:
         self.canvas = Canvas(self.largura, self.altura, "Corrida no Labirinto")
         self.linha_chegada_atingida = False
         self.jogador_vencedor = None
-        self.jogador_id = self.net.id
         
 
         self.obstaculos = [
@@ -190,10 +195,10 @@ class Jogo:
             self.Jogador2.draw(self.canvas.get_canvas())
             self.draw()
 
-            self.receber_dados()
 
             if self.linha_chegada_atingida:
                 self.mostrar_msg_vitoria(self.jogador_vencedor)
+                self.net.send_victory(self.obter_cor_jogador(self.jogador_vencedor))
 
             self.canvas.update()
 
@@ -211,10 +216,6 @@ class Jogo:
         altura_texto = render.get_height()
         x_texto = (self.largura - largura_texto) // 2
         y_texto = (self.altura - altura_texto) // 2
-
-        for jogador in (self.Jogador, self.Jogador2):
-            dados = "vitoria:" + mensagem + ":" + str(self.jogador_id)
-            self.net.send(dados)
         
         self.canvas.get_canvas().blit(render, (x_texto, y_texto))
 
@@ -225,18 +226,8 @@ class Jogo:
             return "2"
         else:
             return ""
-    
-    def receber_dados(self):
-        dados = self.net.recv(2048).decode()
-        if dados.startwith("vitoria"):
-            mensagem, jogador_id_vencedor = dados.split(":")[1:]
+        
 
-            self.mostrar_msg_vitoria_recebida(mensagem, jogador_id_vencedor)
-
-    def mostrar_msg_vitoria_recebida(self, mensagem, jogador_id_vencedor):
-        if self.jogador_id != jogador_id_vencedor:
-            self.mostrar_msg_vitoria(jogador_id_vencedor)
-    
     def send_dados(self):
         dados = str(self.net.id) + ":" + str(self.Jogador.x) + "," + str(self.Jogador.y)
         reposta = self.net.send(dados)
