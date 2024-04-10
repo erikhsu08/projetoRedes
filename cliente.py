@@ -55,8 +55,8 @@ class Jogo:
         self.largura = w
         self.altura = h
         self.Jogador = Jogador(15, 100, (0,0,255))  #Posições iniciais e cores dos jogadores
-        self.Jogador2 = Jogador(15,255, (255, 0, 0)) #Posições iniciais e cores dos jogadores
-        self.canvas = Canvas(self.largura, self.altura, "Jogo de Corrida")
+        self.Jogador2 = Jogador(22,100, (255, 0, 0)) #Posições iniciais e cores dos jogadores
+        self.canvas = Canvas(self.largura, self.altura, "Corrida no Labirinto")
         self.linha_chegada = (self.largura - 50, 0, 100, self.altura)
         self.linha_inicio = (self.largura - 100, 8, 98, self.altura)
 
@@ -70,7 +70,7 @@ class Jogo:
             pygame.Rect(780, 630, 20, 400),#borda da direita 2
             
             #Labirinto
-            pygame.Rect(67, 80, 150, 20),
+            pygame.Rect(67, 80, 133, 20),
             pygame.Rect(180, 80, 20, 100),
             pygame.Rect(145, 180, 55, 20),
             pygame.Rect(67, 150, 20, 350),
@@ -82,15 +82,17 @@ class Jogo:
             pygame.Rect(220, 250, 20, 170),
             pygame.Rect(0, 600, 87, 20),
             pygame.Rect(67, 560, 20, 60),
-            pygame.Rect(67, 560, 320, 20),
+            pygame.Rect(67, 560, 330, 20),
             pygame.Rect(300, 250, 20, 330),
             pygame.Rect(220, 480, 100, 20),
             pygame.Rect(300, 250, 120, 20),
-            pygame.Rect(300, 180, 70, 20),
-            pygame.Rect(350, 80, 20, 100),
-            pygame.Rect(350, 80, 70, 20),
-            pygame.Rect(620, 0, 20, 100),
-            pygame.Rect(550 , 80, 70, 20),
+            pygame.Rect(300, 200, 70, 20),
+            pygame.Rect(350, 150, 20, 50),
+            pygame.Rect(250, 0, 20, 120),
+            pygame.Rect(200, 120, 70, 20),
+            pygame.Rect(250, 60, 150, 20),
+            pygame.Rect(620, 0, 20, 110),
+            pygame.Rect(470 , 60, 170, 20),
             pygame.Rect(350, 140, 120, 20),
             pygame.Rect(470, 140, 20, 60),
             pygame.Rect(420, 200, 70, 20),
@@ -99,13 +101,32 @@ class Jogo:
             pygame.Rect(300, 310, 250, 20),
             pygame.Rect(700, 100, 20, 400),
             pygame.Rect(700, 400, 80, 20),
-            pygame.Rect(620, 170, 20, 290),
-            pygame.Rect(550, 380, 80, 20),
-            pygame.Rect(550, 380, 20, 50),
-            pygame.Rect(620, 440, 80, 20),
-            pygame.Rect(520, 430, 50, 20),
+            pygame.Rect(620, 170, 20, 230),
+            pygame.Rect(550, 380, 170, 20),
+            pygame.Rect(550, 380, 20, 80),
+            pygame.Rect(470, 450, 100, 20),
+            pygame.Rect(470, 310, 20, 70),
             pygame.Rect(380, 310, 20, 100),
-            pygame.Rect(460, 310, 20, 100),
+            pygame.Rect(380, 480, 20, 150),
+            pygame.Rect(470, 450, 20, 130),
+            pygame.Rect(470, 620, 20, 80),
+            pygame.Rect(490, 560, 80, 20),
+            pygame.Rect(550, 560, 20, 120),
+            pygame.Rect(280, 680, 290, 20),
+            pygame.Rect(280, 650, 20, 40),
+            pygame.Rect(190, 630, 110, 20),
+            pygame.Rect(120, 580, 20, 70),
+            pygame.Rect(190, 630, 20, 100),
+            pygame.Rect(70, 710, 120, 20),
+            pygame.Rect(280, 760, 20, 20),
+            pygame.Rect(450, 760, 20, 20),
+            pygame.Rect(360, 700, 20, 20),
+            pygame.Rect(550, 700, 20, 20),
+            pygame.Rect(620, 470, 20, 250),
+            pygame.Rect(620, 700, 100, 20),
+            pygame.Rect(700, 630, 20, 70),
+            pygame.Rect(700, 630, 80, 20),
+            pygame.Rect(700, 560, 80, 20)
             ]
 
     def run(self):
@@ -182,6 +203,8 @@ class Jogo:
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
 
     def draw(self):
+        #Chegada
+        pygame.draw.rect(self.canvas.get_canvas(), (0,255,0), (778, 580, 40, 50))
         for obstaculo in self.obstaculos:
             pygame.draw.rect(self.canvas.get_canvas(), (0, 0, 0), obstaculo)
 
