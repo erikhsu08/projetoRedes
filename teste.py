@@ -181,7 +181,7 @@ class Jogo:
 
             
             #Enviar dados
-            self.Jogador2.x, self.Jogador2.y = self.parse_dados(self.send_dados())
+            self.Jogador2.x, self.Jogador2.y, self.vitoria, vencedor = self.parse_dados(self.send_dados())
 
             #Atualizar Canvas
             self.canvas.draw_background()
@@ -229,10 +229,18 @@ class Jogo:
     @staticmethod
     def parse_dados(dados):
         try:
-            d = dados.split(":")[1].split(",")
-            return int(d[0]), int(d[1])
+            partes = dados.split(":")
+            vitoria = False
+            vencedor = 0
+            if len(partes) > 1:
+                if partes[1].startswith("W"):
+                    vencedor = int(partes[1][1:])
+                    vitoria = True
+            d = partes[1].split(",") if len(partes) > 1 else ["0", "0"]
+            return int(d[0]), int(d[1]), vitoria, vencedor
         except:
-            return 0,0
+            return 0, 0, False, 0
+
         
     def draw_linha_chegada(self):
         pygame.draw.rect(self.canvas.get_canvas(), (0,0,0), self.linha_chegada)
