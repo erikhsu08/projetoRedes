@@ -1,14 +1,17 @@
 import pygame
 import socket
-import threading
+from dotenv import load_dotenv
+import os
 
+#Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 #Trechos relacionado às configurações de rede
 class Network:
     def __init__(self):
         self.cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "192.168.15.30" 
-        self.porta = 5555
+        self.host =  os.getenv("IPV4")
+        self.porta = int(os.getenv("PORTA"))
         self.endereco = (self.host, self.porta)
         self.id = self.connect()
 
