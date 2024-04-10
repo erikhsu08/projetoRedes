@@ -15,12 +15,13 @@ class Network:
 
     def connect(self):
         self.cliente.connect(self.endereco)
+        self.conexao = self.cliente
         return self.cliente.recv(2048).decode()
 
     def send(self, dados):
         try:
-            self.cliente.send(str.encode(dados))
-            reposta = self.cliente.recv(2048).decode()
+            self.conexao.send(str.encode(dados))
+            reposta = self.conexao.recv(2048).decode()
             return reposta
         except socket.error as e:
             return str(e)
